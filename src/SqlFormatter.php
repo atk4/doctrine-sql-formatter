@@ -65,6 +65,20 @@ final class SqlFormatter
         $inlineIndented        = false;
         $clauseLimit           = false;
 
+        $appendNewLineIfNotAddedFx = static function () use (&$addedNewline, &$return, &$tab, &$indentLevel): void {
+            // Add a newline if not already added
+            if ($addedNewline) { // @phpstan-ignore if.alwaysFalse
+                return;
+            }
+
+            $return  = rtrim($return, ' ' . $tab);
+            $return .= "\n" . str_repeat($tab, $indentLevel);
+        };
+        $redoIndentationFx         = static function () use (&$return, &$tab, &$indentLevel): void {
+            // Redo the indentation since it may be different now
+            $return = rtrim($return, $tab) . str_repeat($tab, $indentLevel);
+        };
+
         // Tokenize String
         $cursor = $this->tokenizer->tokenize($string);
 
@@ -103,7 +117,7 @@ final class SqlFormatter
             if ($token->isOfType(Token::TOKEN_TYPE_COMMENT, Token::TOKEN_TYPE_BLOCK_COMMENT)) {
                 if ($token->isOfType(Token::TOKEN_TYPE_BLOCK_COMMENT)) {
                     $indent      = str_repeat($tab, $indentLevel);
-                    $return      = rtrim($return, " \t");
+                    $return      = rtrim($return, ' ' . $tab);
                     $return     .= "\n" . $indent;
                     $highlighted = str_replace("\n", "\n" . $indent, $highlighted);
                 }
@@ -224,10 +238,7 @@ final class SqlFormatter
                     continue;
                 }
 
-                // Add a newline before the closing parentheses (if not already added)
-                if (! $addedNewline) {
-                    $return .= "\n" . str_repeat($tab, $indentLevel);
-                }
+                $appendNewLineIfNotAddedFx();
             } elseif ($token->isOfType(Token::TOKEN_TYPE_RESERVED_TOPLEVEL)) {
                 // Top level reserved words start a new line and increase the special indent level
                 $increaseSpecialIndent = true;
@@ -241,14 +252,9 @@ final class SqlFormatter
 
                 // Add a newline after the top level reserved word
                 $newline = true;
-                // Add a newline before the top level reserved word (if not already added)
-                if (! $addedNewline) {
-                    $return  = rtrim($return, ' ');
-                    $return .= "\n" . str_repeat($tab, $indentLevel);
-                } else {
-                    // If we already added a newline, redo the indentation since it may be different now
-                    $return = rtrim($return, $tab) . str_repeat($tab, $indentLevel);
-                }
+
+                $appendNewLineIfNotAddedFx();
+                $redoIndentationFx();
 
                 if ($token->hasExtraWhitespace()) {
                     $highlighted = preg_replace('/\s+/', ' ', $highlighted);
@@ -269,6 +275,9 @@ final class SqlFormatter
                 $newline = true;
             } elseif (strtoupper($token->value()) === 'CASE') {
                 $increaseBlockIndent = true;
+            } elseif (strtoupper($token->value()) === 'BEGIN') {
+                $newline             = true;
+                $increaseBlockIndent = true;
             } elseif (in_array(strtoupper($token->value()), ['WHEN', 'THEN', 'ELSE', 'END'], true)) {
                 if (strtoupper($token->value()) !== 'THEN') {
                     array_shift($indentTypes);
@@ -276,8 +285,8 @@ final class SqlFormatter
 
                     $prevNotWhitespaceToken = $cursor->subCursor()->previous(Token::TOKEN_TYPE_WHITESPACE);
                     if ($prevNotWhitespaceToken !== null && strtoupper($prevNotWhitespaceToken->value()) !== 'CASE') {
-                        $return  = rtrim($return, ' ');
-                        $return .= "\n" . str_repeat($tab, $indentLevel);
+                        $appendNewLineIfNotAddedFx();
+                        $redoIndentationFx();
                     }
                 }
 
@@ -303,12 +312,9 @@ final class SqlFormatter
                     $newline = true;
                 }
             } elseif ($token->isOfType(Token::TOKEN_TYPE_RESERVED_NEWLINE)) {
-            // Newline reserved words start a new line
-                // Add a newline before the reserved word (if not already added)
-                if (! $addedNewline) {
-                    $return  = rtrim($return, ' ');
-                    $return .= "\n" . str_repeat($tab, $indentLevel);
-                }
+                // Newline reserved words start a new line
+
+                $appendNewLineIfNotAddedFx();
 
                 if ($token->hasExtraWhitespace()) {
                     $highlighted = preg_replace('/\s+/', ' ', $highlighted);
@@ -378,7 +384,7 @@ final class SqlFormatter
         }
 
         // Replace tab characters with the configuration tab character
-        $return = trim(str_replace("\t", $indentString, $return));
+        $return = trim(str_replace($tab, $indentString, $return));
 
         return $this->highlighter->output($return);
     }
