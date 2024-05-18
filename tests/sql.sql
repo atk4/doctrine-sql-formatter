@@ -304,3 +304,9 @@ FROM t1
 WINDOW w1 AS (PARTITION BY department, division), w2 AS (w1 ORDER BY hire_date);
 ---
 SELECT 1::text;
+---
+-- semicolon must decrease special indentation level
+SELECT x
+FROM
+  (SELECT 1 as x);
+MY_NON_TOP_LEVEL_KEYWORD_FX();
