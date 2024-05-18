@@ -305,6 +305,24 @@ WINDOW w1 AS (PARTITION BY department, division), w2 AS (w1 ORDER BY hire_date);
 ---
 SELECT 1::text;
 ---
+-- semicolon must decrease special indentation level
+MY_NON_TOP_LEVEL_KEYWORD_FX_1();
+MY_NON_TOP_LEVEL_KEYWORD_FX_2();
+SELECT x
+FROM
+  (SELECT 1 as x);
+MY_NON_TOP_LEVEL_KEYWORD_FX_3();
+BEGIN
+    MY_NON_TOP_LEVEL_KEYWORD_FX_4();
+    MY_NON_TOP_LEVEL_KEYWORD_FX_5();
+END;
+BEGIN
+  SELECT x
+  FROM
+    (SELECT 1 as x);
+  MY_NON_TOP_LEVEL_KEYWORD_FX_6();
+END;
+---
 SELECT
   case when name = 1 then
     10
@@ -356,3 +374,27 @@ SELECT
     SELECT * FROM T ORDER BY I OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY
   ) oracle_offset_10_limit_5,
 FROM dual;
+---
+begin try
+  insert into [t] ([name], [int], [float], [null])
+  values (N'Ewa', 1, 1.0, null);
+end try
+begin catch
+  if ERROR_NUMBER() = 544
+    begin
+      set IDENTITY_INSERT [t] on;
+      begin try
+        insert into [t] ([name], [int], [float], [null])
+          values (N'Ewa', 1, 1.0, null);
+        set IDENTITY_INSERT [t] off;
+      end try
+      begin catch
+        set IDENTITY_INSERT [t] off;
+        throw;
+      end catch
+    end
+  else
+    begin
+      throw;
+    end
+end catch

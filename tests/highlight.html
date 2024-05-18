@@ -305,6 +305,24 @@ JOIN</span> <span style="color: #333;">c</span> <span style="font-weight:bold;">
 ---
 <pre style="color: black; background-color: white;"><span style="font-weight:bold;">SELECT</span> <span style="color: green;">1</span><span >::</span><span style="color: #333;">text</span><span >;</span></pre>
 ---
+<pre style="color: black; background-color: white;"><span style="color: #aaa;">-- semicolon must decrease special indentation level</span>
+<span style="color: #333;">MY_NON_TOP_LEVEL_KEYWORD_FX_1</span>()<span >;</span>
+<span style="color: #333;">MY_NON_TOP_LEVEL_KEYWORD_FX_2</span>()<span >;</span>
+<span style="font-weight:bold;">SELECT</span> <span style="color: #333;">x</span>
+<span style="font-weight:bold;">FROM</span>
+  (<span style="font-weight:bold;">SELECT</span> <span style="color: green;">1</span> <span style="font-weight:bold;">as</span> <span style="color: #333;">x</span>)<span >;</span>
+<span style="color: #333;">MY_NON_TOP_LEVEL_KEYWORD_FX_3</span>()<span >;</span>
+<span style="font-weight:bold;">BEGIN</span>
+    <span style="color: #333;">MY_NON_TOP_LEVEL_KEYWORD_FX_4</span>()<span >;</span>
+    <span style="color: #333;">MY_NON_TOP_LEVEL_KEYWORD_FX_5</span>()<span >;</span>
+<span style="font-weight:bold;">END</span><span >;</span>
+<span style="font-weight:bold;">BEGIN</span>
+  <span style="font-weight:bold;">SELECT</span> <span style="color: #333;">x</span>
+  <span style="font-weight:bold;">FROM</span>
+    (<span style="font-weight:bold;">SELECT</span> <span style="color: green;">1</span> <span style="font-weight:bold;">as</span> <span style="color: #333;">x</span>)<span >;</span>
+  <span style="color: #333;">MY_NON_TOP_LEVEL_KEYWORD_FX_6</span>()<span >;</span>
+<span style="font-weight:bold;">END</span><span >;</span></pre>
+---
 <pre style="color: black; background-color: white;"><span style="font-weight:bold;">SELECT</span>
   <span style="font-weight:bold;">case</span> <span style="font-weight:bold;">when</span> <span style="color: #333;">name</span> <span >=</span> <span style="color: green;">1</span> <span style="font-weight:bold;">then</span>
     <span style="color: green;">10</span>
@@ -356,4 +374,28 @@ JOIN</span> <span style="color: #333;">c</span> <span style="font-weight:bold;">
     <span style="font-weight:bold;">SELECT</span> <span >*</span> <span style="font-weight:bold;">FROM</span> <span style="color: #333;">T</span> <span style="font-weight:bold;">ORDER BY</span> <span style="color: #333;">I</span> <span style="font-weight:bold;">OFFSET</span> <span style="color: green;">10</span> <span style="font-weight:bold;">ROWS</span> <span style="font-weight:bold;">FETCH</span> <span style="color: #333;">NEXT</span> <span style="color: green;">5</span> <span style="font-weight:bold;">ROWS</span> <span style="color: #333;">ONLY</span>
   ) <span style="color: #333;">oracle_offset_10_limit_5</span><span >,</span>
 <span style="font-weight:bold;">FROM</span> <span style="color: #333;">dual</span><span >;</span></pre>
+---
+<pre style="color: black; background-color: white;"><span style="font-weight:bold;">begin</span> <span style="color: #333;">try</span>
+  <span style="font-weight:bold;">insert</span> <span style="font-weight:bold;">into</span> <span style="color: purple;">[t]</span> (<span style="color: purple;">[name]</span><span >,</span> <span style="color: purple;">[int]</span><span >,</span> <span style="color: purple;">[float]</span><span >,</span> <span style="color: purple;">[null]</span>)
+  <span style="font-weight:bold;">values</span> (<span style="color: #333;">N</span><span style="color: blue;">'Ewa'</span><span >,</span> <span style="color: green;">1</span><span >,</span> <span style="color: green;">1.0</span><span >,</span> <span style="font-weight:bold;">null</span>)<span >;</span>
+<span style="font-weight:bold;">end</span> <span style="color: #333;">try</span>
+<span style="font-weight:bold;">begin</span> <span style="color: #333;">catch</span>
+  <span style="font-weight:bold;">if</span> <span style="color: #333;">ERROR_NUMBER</span>() <span >=</span> <span style="color: green;">544</span>
+    <span style="font-weight:bold;">begin</span>
+      <span style="font-weight:bold;">set</span> <span style="color: #333;">IDENTITY_INSERT</span> <span style="color: purple;">[t]</span> <span style="font-weight:bold;">on</span><span >;</span>
+      <span style="font-weight:bold;">begin</span> <span style="color: #333;">try</span>
+        <span style="font-weight:bold;">insert</span> <span style="font-weight:bold;">into</span> <span style="color: purple;">[t]</span> (<span style="color: purple;">[name]</span><span >,</span> <span style="color: purple;">[int]</span><span >,</span> <span style="color: purple;">[float]</span><span >,</span> <span style="color: purple;">[null]</span>)
+          <span style="font-weight:bold;">values</span> (<span style="color: #333;">N</span><span style="color: blue;">'Ewa'</span><span >,</span> <span style="color: green;">1</span><span >,</span> <span style="color: green;">1.0</span><span >,</span> <span style="font-weight:bold;">null</span>)<span >;</span>
+        <span style="font-weight:bold;">set</span> <span style="color: #333;">IDENTITY_INSERT</span> <span style="color: purple;">[t]</span> <span style="color: #333;">off</span><span >;</span>
+      <span style="font-weight:bold;">end</span> <span style="color: #333;">try</span>
+      <span style="font-weight:bold;">begin</span> <span style="color: #333;">catch</span>
+        <span style="font-weight:bold;">set</span> <span style="color: #333;">IDENTITY_INSERT</span> <span style="color: purple;">[t]</span> <span style="color: #333;">off</span><span >;</span>
+        <span style="color: #333;">throw</span><span >;</span>
+      <span style="font-weight:bold;">end</span> <span style="color: #333;">catch</span>
+    <span style="font-weight:bold;">end</span>
+  <span style="font-weight:bold;">else</span>
+    <span style="font-weight:bold;">begin</span>
+      <span style="color: #333;">throw</span><span >;</span>
+    <span style="font-weight:bold;">end</span>
+<span style="font-weight:bold;">end</span> <span style="color: #333;">catch</span></pre>
 
