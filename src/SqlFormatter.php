@@ -279,6 +279,12 @@ final class SqlFormatter
             } elseif (strtoupper($token->value()) === 'BEGIN') {
                 $newline             = true;
                 $increaseBlockIndent = true;
+            } elseif (strtoupper($token->value()) === 'LOOP') {
+                $prevNotWhitespaceToken = $cursor->subCursor()->previous(Token::TOKEN_TYPE_WHITESPACE);
+                if ($prevNotWhitespaceToken !== null && strtoupper($prevNotWhitespaceToken->value()) !== 'END') {
+                    $newline             = true;
+                    $increaseBlockIndent = true;
+                }
             } elseif (in_array(strtoupper($token->value()), ['WHEN', 'THEN', 'ELSE', 'END'], true)) {
                 if (strtoupper($token->value()) !== 'THEN') {
                     array_shift($indentTypes);
