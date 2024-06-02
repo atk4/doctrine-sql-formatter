@@ -13,6 +13,8 @@ HAVING
 ORDER BY
   COUNT(order_id) DESC;
 ---
+
+---
 UPDATE
   customers
 SET
@@ -1112,7 +1114,7 @@ SELECT
     OFFSET
       10
     ROWS
-      ) oracle_offset_10,
+  ) oracle_offset_10,
   (
     SELECT
       *

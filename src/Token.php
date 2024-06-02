@@ -28,14 +28,10 @@ final class Token
     public const TOKEN_TYPE  = 0;
     public const TOKEN_VALUE = 1;
 
-    private int $type;
-
-    private string $value;
-
-    public function __construct(int $type, string $value)
-    {
-        $this->type  = $type;
-        $this->value = $value;
+    public function __construct(
+        private readonly int $type,
+        private readonly string $value,
+    ) {
     }
 
     public function value(): string
