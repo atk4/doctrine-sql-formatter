@@ -686,11 +686,11 @@ final class Tokenizer
 
     // Regular expressions for tokenizing
 
-    private readonly string $regexBoundaries;
-    private readonly string $regexReserved;
-    private readonly string $regexReservedNewline;
-    private readonly string $regexReservedToplevel;
-    private readonly string $regexFunction;
+    private string $regexBoundaries;
+    private string $regexReserved;
+    private string $regexReservedNewline;
+    private string $regexReservedToplevel;
+    private string $regexFunction;
 
     /**
      * Punctuation that can be used as a boundary between other tokens
@@ -728,7 +728,7 @@ final class Tokenizer
     {
         // Sort list from longest word to shortest, 3x faster than usort
         $sortByLengthFx = static function ($values) {
-            $valuesMap = array_combine($values, array_map(strlen(...), $values));
+            $valuesMap = array_combine($values, array_map('strlen', $values));
             assert($valuesMap !== false);
             arsort($valuesMap);
 
@@ -738,7 +738,7 @@ final class Tokenizer
         // Set up regular expressions
         $this->regexBoundaries       = '(' . implode(
             '|',
-            $this->quoteRegex($this->boundaries),
+            $this->quoteRegex($this->boundaries)
         ) . ')';
         $this->regexReserved         = '(' . implode(
             '|',
@@ -809,7 +809,7 @@ final class Tokenizer
      *
      * @return Token An associative array containing the type and value of the token.
      */
-    private function createNextToken(string $string, Token|null $previous = null): Token
+    private function createNextToken(string $string, ?Token $previous = null): Token
     {
         $matches = [];
         // Whitespace
@@ -848,7 +848,7 @@ final class Tokenizer
                 ($string[0] === '`' || $string[0] === '['
                     ? Token::TOKEN_TYPE_BACKTICK_QUOTE
                     : Token::TOKEN_TYPE_QUOTE),
-                $this->getQuotedString($string),
+                $this->getQuotedString($string)
             );
         }
 
@@ -878,7 +878,7 @@ final class Tokenizer
             preg_match(
                 '/^([0-9]+(\.[0-9]+)?|0x[0-9a-fA-F]+|0b[01]+)($|\s|"\'`|' . $this->regexBoundaries . ')/',
                 $string,
-                $matches,
+                $matches
             )
         ) {
             return new Token(Token::TOKEN_TYPE_NUMBER, $matches[1]);
@@ -898,12 +898,12 @@ final class Tokenizer
                 preg_match(
                     '/^(' . $this->regexReservedToplevel . ')($|\s|' . $this->regexBoundaries . ')/',
                     $upper,
-                    $matches,
+                    $matches
                 )
             ) {
                 return new Token(
                     Token::TOKEN_TYPE_RESERVED_TOPLEVEL,
-                    substr($string, 0, strlen($matches[1])),
+                    substr($string, 0, strlen($matches[1]))
                 );
             }
 
@@ -912,12 +912,12 @@ final class Tokenizer
                 preg_match(
                     '/^(' . $this->regexReservedNewline . ')($|\s|' . $this->regexBoundaries . ')/',
                     $upper,
-                    $matches,
+                    $matches
                 )
             ) {
                 return new Token(
                     Token::TOKEN_TYPE_RESERVED_NEWLINE,
-                    substr($string, 0, strlen($matches[1])),
+                    substr($string, 0, strlen($matches[1]))
                 );
             }
 
@@ -926,12 +926,12 @@ final class Tokenizer
                 preg_match(
                     '/^(' . $this->regexReserved . ')($|\s|' . $this->regexBoundaries . ')/',
                     $upper,
-                    $matches,
+                    $matches
                 )
             ) {
                 return new Token(
                     Token::TOKEN_TYPE_RESERVED,
-                    substr($string, 0, strlen($matches[1])),
+                    substr($string, 0, strlen($matches[1]))
                 );
             }
         }
@@ -943,7 +943,7 @@ final class Tokenizer
         if (preg_match('/^(' . $this->regexFunction . '[(]|\s|[)])/', $upper, $matches)) {
             return new Token(
                 Token::TOKEN_TYPE_RESERVED,
-                substr($string, 0, strlen($matches[1]) - 1),
+                substr($string, 0, strlen($matches[1]) - 1)
             );
         }
 
@@ -964,7 +964,7 @@ final class Tokenizer
     {
         return array_map(
             static fn (string $string): string => preg_quote($string, '/'),
-            $strings,
+            $strings
         );
     }
 
@@ -984,7 +984,7 @@ final class Tokenizer
             (("[^"\\\\]*(?:\\\\.[^"\\\\]*)*("|$))+)|
             ((\'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*(\'|$))+))/sx',
                 $string,
-                $matches,
+                $matches
             )
         ) {
             $ret = $matches[1];

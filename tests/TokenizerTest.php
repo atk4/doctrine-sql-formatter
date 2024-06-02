@@ -8,7 +8,6 @@ use Doctrine\SqlFormatter\Cursor;
 use Doctrine\SqlFormatter\Token;
 use Doctrine\SqlFormatter\Tokenizer;
 use Generator;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -30,7 +29,7 @@ final class TokenizerTest extends TestCase
     {
         $tokenizerReflClass = new ReflectionClass(Tokenizer::class);
         /** @var list<string> $res */
-        $res = $tokenizerReflClass->getProperty($propertyName)->getDefaultValue();
+        $res = $tokenizerReflClass->getDefaultProperties()[$propertyName];
 
         return $res;
     }
@@ -81,9 +80,12 @@ final class TokenizerTest extends TestCase
         }
     }
 
-    /** @param list<Token> $expectedTokens */
-    #[DataProvider('tokenizeData')]
-    #[DataProvider('tokenizeLongConcatData')]
+    /**
+     * @param list<Token> $expectedTokens
+     *
+     * @dataProvider tokenizeData
+     * @dataProvider tokenizeLongConcatData
+     */
     public function testTokenize(array $expectedTokens, string $sql): void
     {
         self::assertEqualsTokens($expectedTokens, (new Tokenizer())->tokenize($sql));
