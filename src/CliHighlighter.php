@@ -45,7 +45,7 @@ final class CliHighlighter implements Highlighter
     }
 
     /** @param Token::TOKEN_TYPE_* $type */
-    private function prefix(int $type): string|null
+    private function prefix(int $type): ?string
     {
         if (! isset(self::TOKEN_TYPE_TO_HIGHLIGHT[$type])) {
             return null;
@@ -61,7 +61,7 @@ final class CliHighlighter implements Highlighter
             "\n",
             $this->escapeSequences[self::HIGHLIGHT_ERROR],
             $value,
-            "\x1b[0m",
+            "\x1b[0m"
         );
     }
 
