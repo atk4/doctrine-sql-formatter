@@ -9,6 +9,7 @@ use Doctrine\SqlFormatter\HtmlHighlighter;
 use Doctrine\SqlFormatter\NullHighlighter;
 use Doctrine\SqlFormatter\SqlFormatter;
 use Generator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use UnexpectedValueException;
 
@@ -34,26 +35,20 @@ final class SqlFormatterTest extends TestCase
         $this->formatter = new SqlFormatter($highlighter);
     }
 
-    /**
-     * @dataProvider formatHighlightData
-     */
+    #[DataProvider('formatHighlightData')]
     public function testFormatHighlight(string $sql, string $html): void
     {
         $this->assertSame($html, $this->formatter->format($sql));
     }
 
-    /**
-     * @dataProvider formatData
-     */
+    #[DataProvider('formatData')]
     public function testFormat(string $sql, string $html): void
     {
         $formatter = new SqlFormatter(new NullHighlighter());
         $this->assertSame($html, $formatter->format($sql));
     }
 
-    /**
-     * @dataProvider highlightData
-     */
+    #[DataProvider('highlightData')]
     public function testHighlight(string $sql, string $html): void
     {
         $this->assertSame($html, $this->formatter->highlight($sql));
@@ -78,18 +73,14 @@ final class SqlFormatterTest extends TestCase
         $this->assertSame($html, $this->formatter->highlight($sql));
     }
 
-    /**
-     * @dataProvider highlightCliData
-     */
+    #[DataProvider('highlightCliData')]
     public function testCliHighlight(string $sql, string $html): void
     {
         $formatter = new SqlFormatter(new CliHighlighter());
         $this->assertSame($html . "\n", $formatter->format($sql));
     }
 
-    /**
-     * @dataProvider compressData
-     */
+    #[DataProvider('compressData')]
     public function testCompress(string $sql, string $html): void
     {
         $this->assertSame($html, $this->formatter->compress($sql));
@@ -130,7 +121,7 @@ final class SqlFormatterTest extends TestCase
                 '"%s" (%d sections) and sql.sql (%d sections) should have the same number of sections',
                 $file,
                 count($formatHighlightData),
-                count($sqlData)
+                count($sqlData),
             ));
         }
 

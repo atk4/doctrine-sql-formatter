@@ -24,18 +24,12 @@ final class Token
     public const TOKEN_TYPE_NUMBER            = 10;
     public const TOKEN_TYPE_VARIABLE          = 11;
 
-    /** @var self::TOKEN_TYPE_* */
-    private int $type;
-
-    private string $value;
-
     /** @param self::TOKEN_TYPE_* $type */
-    public function __construct(int $type, string $value)
-    {
+    public function __construct(
+        private readonly int $type,
+        private readonly string $value,
+    ) {
         assert($value !== '');
-
-        $this->type  = $type;
-        $this->value = $value;
     }
 
     public function value(): string

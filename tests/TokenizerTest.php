@@ -8,6 +8,7 @@ use Doctrine\SqlFormatter\Cursor;
 use Doctrine\SqlFormatter\Token;
 use Doctrine\SqlFormatter\Tokenizer;
 use Generator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -284,7 +285,7 @@ final class TokenizerTest extends TestCase
     ];
 
     /**
-     * Based on https://learn.microsoft.com/en-us/sql/t-sql/language-elements/reserved-keywords-transact-sql list.
+     * Based on https://learn.microsoft.com/en-us/sql/t-sql/language-elements/reserved-keywords-transact-sql?view=sql-server-ver16 list.
      *
      * All these keywords must be quoted.
      */
@@ -1520,7 +1521,7 @@ final class TokenizerTest extends TestCase
     {
         $tokenizerReflClass = new ReflectionClass(Tokenizer::class);
         /** @var list<string> $res */
-        $res = $tokenizerReflClass->getDefaultProperties()[$propertyName];
+        $res = $tokenizerReflClass->getProperty($propertyName)->getDefaultValue();
 
         return $res;
     }
@@ -1612,11 +1613,8 @@ final class TokenizerTest extends TestCase
         }
     }
 
-    /**
-     * @param list<Token> $expectedTokens
-     *
-     * @dataProvider tokenizeData
-     */
+    /** @param list<Token> $expectedTokens */
+    #[DataProvider('tokenizeData')]
     public function testTokenize(array $expectedTokens, string $sql): void
     {
         self::assertEqualsTokens($expectedTokens, (new Tokenizer())->tokenize($sql));
