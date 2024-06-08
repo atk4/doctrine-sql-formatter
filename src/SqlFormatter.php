@@ -29,13 +29,13 @@ use const PHP_SAPI;
 
 final class SqlFormatter
 {
-    private Highlighter $highlighter;
-    private Tokenizer $tokenizer;
+    private readonly Highlighter $highlighter;
+    private readonly Tokenizer $tokenizer;
 
     private const INDENT_TYPE_BLOCK   = 'block';
     private const INDENT_TYPE_SPECIAL = 'special';
 
-    public function __construct(?Highlighter $highlighter = null)
+    public function __construct(Highlighter|null $highlighter = null)
     {
         $this->tokenizer   = new Tokenizer();
         $this->highlighter = $highlighter ?? (PHP_SAPI === 'cli' ? new CliHighlighter() : new HtmlHighlighter());
@@ -86,7 +86,12 @@ final class SqlFormatter
                 return;
             }
 
-            $return = substr($return, 0, -($indentLevel + 1)) . str_repeat($tab, $indentLevel);
+            $rtrimLength = $indentLevel + 1;
+            while (substr($return, -($rtrimLength + 2), 1) === "\n") {
+                $rtrimLength++;
+            }
+
+            $return = substr($return, 0, -$rtrimLength) . str_repeat($tab, $indentLevel);
         };
 
         // Tokenize String
@@ -96,7 +101,7 @@ final class SqlFormatter
         while ($token = $cursor->next(Token::TOKEN_TYPE_WHITESPACE)) {
             $highlighted = $this->highlighter->highlightToken(
                 $token->type(),
-                $token->value()
+                $token->value(),
             );
 
             // If we are increasing the special indent level now
@@ -115,7 +120,13 @@ final class SqlFormatter
 
             // If we need a new line before the token
             if ($newline) {
-                $return       = rtrim($return, ' ');
+                $return = rtrim($return, ' ');
+
+                $prevNotWhitespaceToken = $cursor->subCursor()->previous(Token::TOKEN_TYPE_WHITESPACE);
+                if ($prevNotWhitespaceToken !== null && $prevNotWhitespaceToken->value() === ';') {
+                    $return .= "\n";
+                }
+
                 $return      .= "\n" . str_repeat($tab, $indentLevel);
                 $newline      = false;
                 $addedNewline = true;
@@ -175,7 +186,7 @@ final class SqlFormatter
                 for ($j = 1; $j <= 250; $j++) {
                     // Reached end of string
                     $next = $subCursor->next(Token::TOKEN_TYPE_WHITESPACE);
-                    if (! $next) {
+                    if ($next === null) {
                         break;
                     }
 
@@ -198,7 +209,7 @@ final class SqlFormatter
                             Token::TOKEN_TYPE_RESERVED_TOPLEVEL,
                             Token::TOKEN_TYPE_RESERVED_NEWLINE,
                             Token::TOKEN_TYPE_COMMENT,
-                            Token::TOKEN_TYPE_BLOCK_COMMENT
+                            Token::TOKEN_TYPE_BLOCK_COMMENT,
                         )
                     ) {
                         break;
@@ -215,7 +226,7 @@ final class SqlFormatter
 
                 // Take out the preceding space unless there was whitespace there in the original query
                 $prevToken = $cursor->subCursor()->previous();
-                if ($prevToken && ! $prevToken->isOfType(Token::TOKEN_TYPE_WHITESPACE)) {
+                if ($prevToken !== null && ! $prevToken->isOfType(Token::TOKEN_TYPE_WHITESPACE)) {
                     $return = rtrim($return, ' ');
                 }
 
@@ -328,9 +339,9 @@ final class SqlFormatter
             } elseif ($token->isOfType(Token::TOKEN_TYPE_BOUNDARY)) {
                 // Multiple boundary characters in a row should not have spaces between them (not including parentheses)
                 $prevNotWhitespaceToken = $cursor->subCursor()->previous(Token::TOKEN_TYPE_WHITESPACE);
-                if ($prevNotWhitespaceToken && $prevNotWhitespaceToken->isOfType(Token::TOKEN_TYPE_BOUNDARY)) {
+                if ($prevNotWhitespaceToken !== null && $prevNotWhitespaceToken->isOfType(Token::TOKEN_TYPE_BOUNDARY)) {
                     $prevToken = $cursor->subCursor()->previous();
-                    if ($prevToken && ! $prevToken->isOfType(Token::TOKEN_TYPE_WHITESPACE)) {
+                    if ($prevToken !== null && ! $prevToken->isOfType(Token::TOKEN_TYPE_WHITESPACE)) {
                         $return = rtrim($return, ' ');
                     }
                 }
@@ -358,12 +369,12 @@ final class SqlFormatter
             }
 
             $nextNotWhitespace = $cursor->subCursor()->next(Token::TOKEN_TYPE_WHITESPACE);
-            if (! $nextNotWhitespace || ! $nextNotWhitespace->isOfType(Token::TOKEN_TYPE_NUMBER)) {
+            if ($nextNotWhitespace === null || ! $nextNotWhitespace->isOfType(Token::TOKEN_TYPE_NUMBER)) {
                 continue;
             }
 
             $prev = $cursor->subCursor()->previous(Token::TOKEN_TYPE_WHITESPACE);
-            if (! $prev) {
+            if ($prev === null) {
                 continue;
             }
 
@@ -372,7 +383,7 @@ final class SqlFormatter
                     Token::TOKEN_TYPE_QUOTE,
                     Token::TOKEN_TYPE_BACKTICK_QUOTE,
                     Token::TOKEN_TYPE_WORD,
-                    Token::TOKEN_TYPE_NUMBER
+                    Token::TOKEN_TYPE_NUMBER,
                 )
             ) {
                 continue;
@@ -385,7 +396,7 @@ final class SqlFormatter
         if (array_search(self::INDENT_TYPE_BLOCK, $indentTypes) !== false) {
             $return  = rtrim($return, ' ');
             $return .= $this->highlighter->highlightErrorMessage(
-                'WARNING: unclosed parentheses or section'
+                'WARNING: unclosed parentheses or section',
             );
         }
 
@@ -411,7 +422,7 @@ final class SqlFormatter
         while ($token = $cursor->next()) {
             $return .= $this->highlighter->highlightToken(
                 $token->type(),
-                $token->value()
+                $token->value(),
             );
         }
 
@@ -443,7 +454,7 @@ final class SqlFormatter
                 $token->isOfType(
                     Token::TOKEN_TYPE_RESERVED,
                     Token::TOKEN_TYPE_RESERVED_NEWLINE,
-                    Token::TOKEN_TYPE_RESERVED_TOPLEVEL
+                    Token::TOKEN_TYPE_RESERVED_TOPLEVEL,
                 )
             ) {
                 $newValue = preg_replace('/\s+/', ' ', $token->value());

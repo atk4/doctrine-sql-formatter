@@ -7,11 +7,14 @@
 
     <arg name="basepath" value="."/>
     <arg name="extensions" value="php"/>
+    <arg name="parallel" value="80"/>
     <arg name="cache" value=".phpcs-cache"/>
     <arg name="colors" />
 
-    <!-- Show progress of the run -->
-    <arg value="p"/>
+    <!-- Ignore warnings, show progress of the run and show sniff names -->
+    <arg value="nps"/>
+
+    <config name="php_version" value="80100"/>
 
     <rule ref="Doctrine"/>
 
