@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Doctrine\SqlFormatter;
 
 use function array_map;
+use function assert;
 use function count;
 use function is_int;
 use function preg_match;
@@ -772,7 +773,8 @@ final class Tokenizer
         $regexReservedNewline  = str_replace(' ', '\s+', $this->makeRegexFromList($this->reservedNewline));
         $regexFunction         = $this->makeRegexFromList($this->functions);
 
-        self::$nextTokenRegexNumber            = '/\G(?:\d+(?:\.\d+)?|0x[\da-fA-F]+|0b[01]+)(?=$|\s|"\'`|' . $regexBoundaries . ')/';
+        self::$nextTokenRegexNumber            = '/\G(?:\d+(?:\.\d+)?|0x[\da-fA-F]+|0b[01]+)(?=$|\s|"\'`|'
+            . $regexBoundaries . ')/';
         self::$nextTokenRegexBoundaryCharacter = '/\G' . $regexBoundaries . '/';
         self::$nextTokenRegexReservedToplevel  = '/\G' . $regexReservedToplevel . '(?=$|\s|' . $regexBoundaries . ')/';
         self::$nextTokenRegexReservedNewline   = '/\G' . $regexReservedNewline . '(?=$|\s|' . $regexBoundaries . ')/';
@@ -812,6 +814,7 @@ final class Tokenizer
             } else {
                 while (! str_starts_with($v, $prefix)) {
                     $prefix = substr($prefix, 0, -1);
+                    assert($prefix !== false);
                 }
             }
         }
@@ -877,7 +880,7 @@ final class Tokenizer
      * @param string     $upper    The SQL string in upper case
      * @param Token|null $previous The result of the previous createNextToken() call
      */
-    private function createNextToken(string $string, string $upper, int $offset, Token|null $previous = null): Token
+    private function createNextToken(string $string, string $upper, int $offset, ?Token $previous = null): Token
     {
         // Whitespace
         if (preg_match('/\G\s+/', $string, $matches, 0, $offset)) {
@@ -918,7 +921,7 @@ final class Tokenizer
                 ($firstChar === '`' || $firstChar === '['
                     ? Token::TOKEN_TYPE_BACKTICK_QUOTE
                     : Token::TOKEN_TYPE_QUOTE),
-                $this->getNextQuotedString($string, $offset),
+                $this->getNextQuotedString($string, $offset)
             );
         }
 
@@ -950,7 +953,7 @@ final class Tokenizer
                 $string,
                 $matches,
                 0,
-                $offset,
+                $offset
             )
         ) {
             return new Token(Token::TOKEN_TYPE_NUMBER, $matches[0]);
@@ -971,12 +974,12 @@ final class Tokenizer
                     $upper,
                     $matches,
                     0,
-                    $offset,
+                    $offset
                 )
             ) {
                 return new Token(
                     Token::TOKEN_TYPE_RESERVED_TOPLEVEL,
-                    substr($string, $offset, strlen($matches[0])),
+                    substr($string, $offset, strlen($matches[0]))
                 );
             }
 
@@ -987,12 +990,12 @@ final class Tokenizer
                     $upper,
                     $matches,
                     0,
-                    $offset,
+                    $offset
                 )
             ) {
                 return new Token(
                     Token::TOKEN_TYPE_RESERVED_NEWLINE,
-                    substr($string, $offset, strlen($matches[0])),
+                    substr($string, $offset, strlen($matches[0]))
                 );
             }
 
@@ -1003,12 +1006,12 @@ final class Tokenizer
                     $upper,
                     $matches,
                     0,
-                    $offset,
+                    $offset
                 )
             ) {
                 return new Token(
                     Token::TOKEN_TYPE_RESERVED,
-                    substr($string, $offset, strlen($matches[0])),
+                    substr($string, $offset, strlen($matches[0]))
                 );
             }
         }
@@ -1018,7 +1021,7 @@ final class Tokenizer
         if (preg_match(self::$nextTokenRegexFunction, $upper, $matches, 0, $offset)) {
             return new Token(
                 Token::TOKEN_TYPE_RESERVED,
-                substr($string, $offset, strlen($matches[0])),
+                substr($string, $offset, strlen($matches[0]))
             );
         }
 
@@ -1050,7 +1053,7 @@ final class Tokenizer
                 $string,
                 $matches,
                 0,
-                $offset,
+                $offset
             )
         ) {
             $ret = $matches[0];
